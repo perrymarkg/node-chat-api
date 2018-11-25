@@ -1,6 +1,7 @@
 const chat = (app) => {
-    app.post('/login', (res, req) => {
-        return res.send('test');
+    app.post('/login', (req, res) => {
+        console.log(req.body.username);
+        res.send({"auth":"auth"});
     });
 }
 

@@ -1,6 +1,8 @@
 const chat = require('./chat');
-const routes = (app) => {
+const user = require('./user');
+const routes = (app, db) => {
     chat(app);
+    user(app, db);
 }
 
 module.exports = routes;
