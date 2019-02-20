@@ -3,13 +3,19 @@ const route = require('express').Router();
 const bcrypt = require('bcrypt');
 const User = require('../db/models/user.model');
 const validator = require('./validators/auth.validator')
-const authService = require('../services/auth.service');
+const userService = require('../services/user.service');
 
 route.post(
     '/register',
     validator.auth,
     (req, res) => {
-        authService.hash(req,res);
+        userService
+            .saveUser(req.body.username, req.body.password)
+            .then(result => {
+                res.status(200).send(result);
+            }).catch(error => {
+                res.status(401).send(error);
+            });
     }
 );
 
@@ -17,8 +23,18 @@ route.get('/', (req, res) => {
     res.status(200).json({msg: "message"});
 });
 
-route.get('/login', (req, res) => {
-    User.findOne({username: req.body.username})
+route.post(
+    '/login',
+    validator.auth,
+    (req, res) => {
+        userService
+            .validateUser(req.body.username,  req.body.password)
+            .then(result => {
+                res.status(200).send(result);
+            }).catch(error => {
+                res.status(401).send(error);
+            })
+    /* User.findOne({username: req.body.username})
     .exec()
     .then(user => {
         bcrypt.compare(
@@ -48,7 +64,7 @@ route.get('/login', (req, res) => {
             success:false,
             message:err.message
         })
-    });
+    }); */
 });
 
 
