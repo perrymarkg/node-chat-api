@@ -1,43 +1,48 @@
 const mongoose = require('mongoose');
 const User = require('../db/models/user.model');
 const bcrypt = require('bcrypt');
+const responseService = require('./response.service');
 
 const _this = {
     validateUser: (username, password) => {
-        return Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             _this.findUserBy(username)
             .then(result => {
-                //const res = _this.validatePassword(password, result.password);
+                
+                bcrypt.compare(password, result.password)
+                .then(res => {
+                    if(res) {
+                        delete result.password;
+                        resolve(responseService.ok(result));
+                    } else {
+                        reject(responseService.error('Invalid password'));
+                    }
+                }).catch(err => {
+                    reject(err);
+                });
+                
 
-                resolve(result);
             }).catch(error => {
-                reject(error);
+                reject(responseService.error('Invalid'));
             });
         });
     },
+    // @Todo: Fix field make dynamic
     findUserBy: (username, field = 'username') => {
         return new Promise((resolve, reject) => {
             User
-            .findOne({field, username})
+            .findOne({'username': username})
             .exec()
             .then(result => {
-                resolve(result);
+
+                if (result === null) {
+                    reject({'msg': "Error"});
+                } else {
+                    resolve(result);
+                }
             }).catch(error => {
                 reject(error)
             })
-        });
-    },
-    validatePassword: (password, hashedpwd) => {
-        bcrypt.compare(password, hashedpwd, (err, result) => {
-            if (err) {
-                return {valid: false, msg: err.message};
-            }
-
-            if (result) {
-                return {valid: true};
-            }
-
-            return {valid:false, msg: 'Invalid'};
         });
     },
     createUser: (username, password) => {
