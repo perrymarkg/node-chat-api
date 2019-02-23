@@ -1,75 +1,66 @@
 const mongoose = require('mongoose');
 const User = require('../db/models/user.model');
 const bcrypt = require('bcrypt');
-const responseService = require('./response.service');
 
 const _this = {
     validateUser: (username, password) => {
+        //
         return new Promise((resolve, reject) => {
             _this.findUserBy(username)
-            .then(result => {
-                
-                bcrypt.compare(password, result.password)
-                .then(res => {
-                    if(res) {
-                        delete result.password;
-                        resolve(responseService.ok(result));
-                    } else {
-                        reject(responseService.error('Invalid password'));
-                    }
-                }).catch(err => {
-                    reject(err);
-                });
-                
-
-            }).catch(error => {
-                reject(responseService.error('Invalid'));
+            .then(user => _this.validatePassword(user, password))
+            .then(user => resolve(user))
+            .catch(error => {
+                reject(error);
             });
         });
     },
-    // @Todo: Fix field make dynamic
-    findUserBy: (username, field = 'username') => {
+    validatePassword: (user, rawpassword) => {
+        //
         return new Promise((resolve, reject) => {
-            User
-            .findOne({'username': username})
+            if (!user) {
+                reject('Invalid user');
+            }
+
+            bcrypt.compare(rawpassword, user.password)
+                .then(result => resolve(user))
+                .catch(error => reject(error));
+        });
+    },
+    findUserBy: (value, field = 'username') => {
+        //
+        const search ={};
+        search[field] = value;
+
+        return new Promise((resolve, reject) => {
+            User.findOne(search)
             .exec()
             .then(result => {
-
+                //
                 if (result === null) {
-                    reject({'msg': "Error"});
+                    reject('Invalid username/password');
                 } else {
                     resolve(result);
                 }
-            }).catch(error => {
-                reject(error)
             })
+            .catch(error => reject(error));
         });
     },
     createUser: (username, password) => {
+        //
         return new User({
             _id: new mongoose.Types.ObjectId(),
             username: username,
             password: password
         });
     },
-    saveUser: (username, password, cb) => {
+    saveUser: (username, password) => {
+        //
         return new Promise((resolve, reject) => {
-            bcrypt.hash(password, 10, (err, hash) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    const user = _this.createUser(username, hash);
-
-                    user.save().then(result => {
-                        resolve({
-                            _id: result._id,
-                            username: result.username
-                        });
-                    }).catch(error => {
-                        reject(error);
-                    });
-                }
-            });
+            bcrypt.hash(password, 10)
+            .then(hashedPass => _this.createUser(username, hashedPass))
+            .then(user => user.save())
+            .then(user => resolve(user))
+            .catch(error => reject(error));
         });
     }
 }

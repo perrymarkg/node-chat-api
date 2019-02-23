@@ -1,11 +1,17 @@
 const _this = {
-    error: (msg, code = 401) => {
-        return {valid: false, msg: msg, code: code}
+    error: (msg, error = false, code = 401) => {
+        const r = {valid: false, msg: msg, code:code};
+
+        if (error) {
+            r.error = error;
+        }
+
+        return r;
     },
     ok: (objects = {}, msg = false, code = 200) => {
         const r = {valid: true, objects: objects}
 
-        if (!msg) {
+        if (msg) {
             r.msg = msg;
         }
 

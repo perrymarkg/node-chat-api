@@ -11,9 +11,8 @@ route.post(
     (req, res) => {
         userService
             .saveUser(req.body.username, req.body.password)
-            .then(result => {
-                res.status(200).send(result);
-            }).catch(error => {
+            .then(result => res.status(200).send(result))
+            .catch(error => {
                 res.status(401).send(error);
             });
     }
@@ -29,42 +28,11 @@ route.post(
     (req, res) => {
         userService
             .validateUser(req.body.username,  req.body.password)
-            .then(result => {
-                res.status(200).send(result);
-            }).catch(error => {
+            .then(result => res.status(200).send(result))
+            .catch(error => {
+                console.log(error);
                 res.status(401).send(error);
             })
-    /* User.findOne({username: req.body.username})
-    .exec()
-    .then(user => {
-        bcrypt.compare(
-            req.body.password,
-            user.password,
-            (err, result) => {
-                if (err) {
-                    return res.status(401).json({
-                        success: false,
-                        message: err.message
-                    });
-                } 
-                if (result) {
-                    return res.status(200).json({
-                        success:true,
-                        item: result
-                    })
-                }
-                return res.status(401).json({
-                    success:false,
-                    message: 'Unauthorized'
-                });
-            }    
-        );
-    }).catch(err => {
-        res.status(500).json({
-            success:false,
-            message:err.message
-        })
-    }); */
 });
 
 
