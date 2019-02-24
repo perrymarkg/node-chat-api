@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const User = require('../db/models/user.model');
 const bcrypt = require('bcrypt');
+const config = require('../config/config');
+const jwt = require('jsonwebtoken');
 
 const _this = {
     validateUser: (username, password) => {
@@ -9,9 +11,7 @@ const _this = {
             _this.findUserBy(username)
             .then(user => _this.validatePassword(user, password))
             .then(user => resolve(user))
-            .catch(error => {
-                reject(error);
-            });
+            .catch(error => reject(error));
         });
     },
     validatePassword: (user, rawpassword) => {
@@ -37,7 +37,7 @@ const _this = {
             .then(result => {
                 //
                 if (result === null) {
-                    reject('Invalid username/password');
+                    reject({message: 'Invalid username/password'});
                 } else {
                     resolve(result);
                 }
@@ -45,23 +45,44 @@ const _this = {
             .catch(error => reject(error));
         });
     },
-    createUser: (username, password) => {
+    createUser: (email, username, password) => {
         //
         return new User({
             _id: new mongoose.Types.ObjectId(),
+            email: email,
             username: username,
             password: password
         });
     },
-    saveUser: (username, password) => {
+    saveUser: (email, username, password) => {
         //
         return new Promise((resolve, reject) => {
-            bcrypt.hash(password, 10)
-            .then(hashedPass => _this.createUser(username, hashedPass))
-            .then(user => user.save())
-            .then(user => resolve(user))
-            .catch(error => reject(error));
+            _this.createUser(email, username,password)
+            .save()
+            .then(result => resolve(result))
+            .catch(error => reject(_this.handeSaveUserError(error)));
         });
+    },
+    handeSaveUserError: (e) => {
+        if (e) {
+            return {
+                message: (e.name === 'MongoError' && e.code === 11000) ? 'Email already exists!' : e
+            }    
+        } else { 
+            console.log(e); 
+        }
+    },
+    issueCredentials: (user) => {
+        
+        const userPayload = {
+            _id: user._id,
+            username: user.username
+        }
+
+        return {
+            token: jwt.sign(userPayload, config.secret)
+        }
+        
     }
 }
 
