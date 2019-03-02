@@ -58,14 +58,20 @@ describe("User Tests", () => {
 
     it("Should validate by username and password", async() => {
         
+        spyOn(UserService, 'findUserBy').and.callThrough();
+        spyOn(UserService, 'validatePassword').and.callThrough();
+
         const result = await UserService
             .validateUser('dummy', 'samplepassword')
             .then(result => result)
             .catch(error => error);
 
         expect(result).toEqual(User);
-        
-    })
+        expect(UserService.findUserBy).toHaveBeenCalled();
+        expect(UserService.validatePassword).toHaveBeenCalled();
+    });
+
+    
 
 
 });
