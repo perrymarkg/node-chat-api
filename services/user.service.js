@@ -20,15 +20,22 @@ const _this = {
             if (!user) {
                 reject('Invalid user');
             }
-
+            
             bcrypt.compare(rawpassword, user.password)
-                .then(result => resolve(user))
+                .then(result => {
+                    
+                    if (!result) {
+                        reject({message: "Invalid username/password"})
+                    }
+
+                    resolve(user)
+                })
                 .catch(error => reject(error));
         });
     },
     findUserBy: (value, field = 'username') => {
         //
-        const search ={};
+        const search = {};
         search[field] = value;
 
         return new Promise((resolve, reject) => {
@@ -66,7 +73,7 @@ const _this = {
     handeSaveUserError: (e) => {
         if (e) {
             return {
-                message: (e.name === 'MongoError' && e.code === 11000) ? 'Email already exists!' : e
+                message: (e.name === 'MongoError' && e.code === 11000) ? 'Username/Email already exists!' : e
             }    
         } else { 
             console.log(e); 
