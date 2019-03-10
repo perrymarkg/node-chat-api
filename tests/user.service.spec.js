@@ -2,37 +2,51 @@ const UserService = require('../services/user.service');
 const UserModel = require('../db/models/user.model');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const {MongoMemoryServer} = require('mongodb-memory-server');
+const opts = { useNewUrlParser: true, useCreateIndex: true,}
 
 describe("User Tests", () => {
 
     let User;
-    beforeEach(async() => {
-        
-        User = new UserModel({
-            _id: new mongoose.Types.ObjectId(),
-            email: 'mail@google.com',
-            username: 'dummy',
-            password: 'samplepassword'
-        });
 
-        spyOn(mongoose.Query.prototype, "exec")
-            .and
-            .returnValue(Promise.resolve(User));
+    beforeAll(async (done) => {
+        //jasmine.DEFAULT_TIMEOUT_INTERVAL = 70000;
+        mongoServer = new MongoMemoryServer();
+        mongoServer
+            .getConnectionString()
+            .then((mongoUri) => {
+                return mongoose.connect(mongoUri, opts);
+            })
+            .then(async() => {
+                User = await UserService
+                .saveUser('perry@mail.com', 'dummy', 'samplepassword')
+                .then(result => result)
+                .catch(error => error);
+
+                done();
+            });
+
         
-        User.password = await bcrypt.genSalt(10)
-            .then(salt => bcrypt.hash(User.password, salt))
-            .then(hashed => hashed)
-            .catch(error => error);
-    })
+    });
+
+    afterAll(() => {
+        mongoose.disconnect();
+        mongoServer.stop();
+    });
+
+    it("Should create a user", async() => {
+        expect(User instanceof UserModel).toBe(true)
+    });
 
     it("Should return a user model", async() => {
         
         const result = await UserService
-        .findUserBy('dummy', 'samplepassword')
+        .findUserBy('dummy')
         .then(result => result)
         .catch(error => error);
         
-        expect(result).toEqual(User);
+        expect(result instanceof UserModel).toBe(true)
+        expect(result.username).toBe('dummy');
     });
 
     it("Should validate a password", async() => {
@@ -42,7 +56,8 @@ describe("User Tests", () => {
             .then(result => result)
             .catch(error => error)
 
-        expect(result).toEqual(User);
+        expect(result instanceof UserModel).toBe(true)
+        expect(result.username).toBe('dummy');
     });
 
     it("Should not validate an invalid password", async() => {
@@ -52,7 +67,7 @@ describe("User Tests", () => {
             .then(result => result)
             .catch(error => error)
 
-        expect(result).not.toEqual(User);
+        expect(result instanceof UserModel).toBe(false)
 
     });
 
@@ -66,7 +81,7 @@ describe("User Tests", () => {
             .then(result => result)
             .catch(error => error);
 
-        expect(result).toEqual(User);
+        expect(result instanceof UserModel).toBe(true)
         expect(UserService.findUserBy).toHaveBeenCalled();
         expect(UserService.validatePassword).toHaveBeenCalled();
     });
