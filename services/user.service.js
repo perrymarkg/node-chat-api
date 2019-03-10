@@ -25,7 +25,7 @@ const _this = {
                 .then(result => {
                     
                     if (!result) {
-                        reject({message: "Invalid username/password"})
+                        reject({message: "Invalid password"})
                     }
 
                     resolve(user)
@@ -44,7 +44,7 @@ const _this = {
             .then(result => {
                 //
                 if (result === null) {
-                    reject({message: 'Invalid username/password'});
+                    reject({message: 'Invalid username'});
                 } else {
                     resolve(result);
                 }
