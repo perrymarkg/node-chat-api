@@ -1,38 +1,31 @@
 const UserService = require('../services/user.service');
 const UserModel = require('../db/models/user.model');
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const {MongoMemoryServer} = require('mongodb-memory-server');
-const opts = { useNewUrlParser: true, useCreateIndex: true,}
+
+const idb = require('./in-memory-db');
 
 describe("User Tests", () => {
 
     let User;
 
     beforeAll(async (done) => {
-        //jasmine.DEFAULT_TIMEOUT_INTERVAL = 70000;
-        mongoServer = new MongoMemoryServer();
-        mongoServer
-            .getConnectionString()
-            .then((mongoUri) => {
-                return mongoose.connect(mongoUri, opts);
-            })
-            .then(async() => {
-                User = await UserService
-                .saveUser('perry@mail.com', 'dummy', 'samplepassword')
-                .then(result => result)
-                .catch(error => error);
-
-                done();
-            });
-
-        
+        await idb.init();
+        done();
     });
 
     afterAll(() => {
-        mongoose.disconnect();
-        mongoServer.stop();
+        idb.disconnect();
     });
+
+    beforeEach(async() => {
+        User = await UserService
+            .saveUser('perry@mail.com', 'dummy', 'samplepassword')
+            .then(result => result)
+            .catch(error => error);
+    });
+
+    afterEach(async() => {
+        await idb.dropAll();
+    })
 
     it("Should create a user", async() => {
         expect(User instanceof UserModel).toBe(true)
