@@ -3,7 +3,8 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const PORT = 3000;
-const routes = require('./routes/auth.route');
+const authRoutes = require('./routes/auth.route');
+const chatRoutes = require('./routes/chat.route');
 const mongoose = require('mongoose');
 
 mongoose.set('useCreateIndex', true);
@@ -14,7 +15,8 @@ mongoose.connection.on('error', (r) => {
 
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
-app.use('/', routes);
+app.use('/', authRoutes);
+app.use('/', chatRoutes);
 
 app.listen(PORT, () => {
     console.log('LISTENING on port' + PORT);
